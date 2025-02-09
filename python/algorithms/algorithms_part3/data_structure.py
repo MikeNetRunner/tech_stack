@@ -12,16 +12,16 @@ sys.setrecursionlimit(1000000)
 DATA_DIR = os.path.expanduser("~/tech_stack/python/algorithms/algorithms_part3")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# === Measure time ===
+# === Measure execution time ===
 def measure_time(operation: Callable, *args) -> Tuple[float, any]:
     start_time = time.perf_counter()
     result = operation(*args)
     end_time = time.perf_counter()
     return end_time - start_time, result
 
-# === Implementacje struktur ===
+# === Implementations of data structures ===
 
-# 📌 Drzewo BST z poprawnym usuwaniem
+# 📌 Binary Search Tree (BST) with proper deletion
 class BSTNode:
     def __init__(self, key):
         self.key = key
@@ -69,18 +69,18 @@ class BST:
                 return node.right
             elif node.right is None:
                 return node.left
-            temp = self.find_min(node.right)  # Znajdujemy najmniejszy węzeł z prawego poddrzewa
-            node.key = temp.key  # Kopiujemy wartość
-            node.right = self._delete(node.right, temp.key)  # Usuwamy najmniejszy węzeł
+            temp = self.find_min(node.right)  # Find the smallest node in the right subtree
+            node.key = temp.key  # Copy the value
+            node.right = self._delete(node.right, temp.key)  # Remove the smallest node
         return node
 
     def find_min(self, node):
-        """ Znajduje węzeł o najmniejszym kluczu w poddrzewie """
+        """ Finds the node with the smallest key in a subtree """
         while node.left:
             node = node.left
-        return node  # Zwracamy węzeł, nie wartość
+        return node  # Return the node, not just the value
 
-# 📌 Implementacja stosu
+# 📌 Stack implementation
 class Stack:
     def __init__(self):
         self.stack = []
@@ -94,7 +94,7 @@ class Stack:
     def search(self, item):
         return item in self.stack
 
-# 📌 Implementacja kolejki
+# 📌 Queue implementation
 class Queue:
     def __init__(self):
         self.queue = []
@@ -108,15 +108,15 @@ class Queue:
     def search(self, item):
         return item in self.queue
 
-# === Generowanie danych ===
+# === Generate random data ===
 def generate_data(size: int):
     return [random.randint(0, 10000) for _ in range(size)]
 
-# === Testowanie i benchmark ===
+# === Benchmarking and testing ===
 def benchmark(size=100000):
     console = Console()
-    table = Table(title="Czasy operacji")
-    table.add_column("Struktura", justify="left", style="cyan", no_wrap=True)
+    table = Table(title="Operation Times")
+    table.add_column("Structure", justify="left", style="cyan", no_wrap=True)
     table.add_column("Insert (s)", justify="right", style="magenta")
     table.add_column("Search (s)", justify="right", style="green")
     table.add_column("Delete (s)", justify="right", style="yellow")
@@ -125,7 +125,7 @@ def benchmark(size=100000):
     
     results = {}
 
-    # 📌 Lista
+    # 📌 List
     lst = []
     insert_time, _ = measure_time(lambda: [lst.append(x) for x in numbers])
     search_time, _ = measure_time(lambda: [x in lst for x in numbers])
@@ -133,7 +133,7 @@ def benchmark(size=100000):
     table.add_row("List", f"{insert_time:.6f}", f"{search_time:.6f}", f"{delete_time:.6f}")
     results["List"] = (insert_time, search_time, delete_time)
 
-    # 📌 Dict
+    # 📌 Dictionary (Hash Map)
     hash_map = {}
     insert_time, _ = measure_time(lambda: [hash_map.update({x: True}) for x in numbers])
     search_time, _ = measure_time(lambda: [x in hash_map for x in numbers])
@@ -141,7 +141,7 @@ def benchmark(size=100000):
     table.add_row("Dict", f"{insert_time:.6f}", f"{search_time:.6f}", f"{delete_time:.6f}")
     results["Dict"] = (insert_time, search_time, delete_time)
 
-    # 📌 BST - drzewo wyszukiwań binarnych
+    # 📌 BST - Binary Search Tree
     bst = BST()
     insert_time, _ = measure_time(lambda: [bst.insert(x) for x in numbers])
     search_time, _ = measure_time(lambda: [bst.search(x) for x in numbers])
@@ -167,7 +167,7 @@ def benchmark(size=100000):
 
     console.print(table)
 
-    # === Wykresy ===
+    # === Plot results ===
     structures = list(results.keys())
     insert_times = [results[struct][0] for struct in structures]
     search_times = [results[struct][1] for struct in structures]
@@ -177,9 +177,9 @@ def benchmark(size=100000):
     plt.bar(structures, insert_times, color='magenta', label='Insert')
     plt.bar(structures, search_times, color='green', label='Search', bottom=insert_times)
     plt.bar(structures, delete_times, color='yellow', label='Delete', bottom=[i+s for i, s in zip(insert_times, search_times)])
-    plt.xlabel("Struktura danych")
-    plt.ylabel("Czas (s)")
-    plt.title("Porównanie czasów operacji")
+    plt.xlabel("Data Structure")
+    plt.ylabel("Time (s)")
+    plt.title("Comparison of Operation Times")
     plt.legend()
     plt.xticks(rotation=30)
     plt.show()
