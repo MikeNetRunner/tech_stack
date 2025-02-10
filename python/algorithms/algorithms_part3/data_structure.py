@@ -1,11 +1,13 @@
+import os
+import random
 import sys
 import time
-import random
-import os
+from typing import Callable, Tuple
+
+import numpy as np
 import matplotlib.pyplot as plt
 from rich.console import Console
 from rich.table import Table
-from typing import Callable, Tuple
 
 sys.setrecursionlimit(1000000)
 
@@ -31,9 +33,13 @@ class BSTNode:
 class BST:
     def __init__(self):
         self.root = None
+        self.insert_count = 0
+        self.search_count = 0
+        self.delete_count = 0
 
     def insert(self, key):
         self.root = self._insert(self.root, key)
+        self.insert_count += 1
 
     def _insert(self, node, key):
         if node is None:
@@ -45,6 +51,7 @@ class BST:
         return node
 
     def search(self, key):
+        self.search_count += 1
         return self._search(self.root, key) is not None
 
     def _search(self, node, key):
@@ -56,6 +63,7 @@ class BST:
 
     def delete(self, key):
         self.root = self._delete(self.root, key)
+        self.delete_count += 1
 
     def _delete(self, node, key):
         if node is None:
@@ -84,28 +92,44 @@ class BST:
 class Stack:
     def __init__(self):
         self.stack = []
+        self.insert_count = 0
+        self.search_count = 0
+        self.delete_count = 0
 
     def push(self, item):
         self.stack.append(item)
+        self.insert_count += 1
 
     def pop(self):
-        return self.stack.pop() if self.stack else None
+        if self.stack:
+            self.delete_count += 1
+            return self.stack.pop()
+        return None
 
     def search(self, item):
+        self.search_count += 1
         return item in self.stack
 
 # 📌 Queue implementation
 class Queue:
     def __init__(self):
         self.queue = []
+        self.insert_count = 0
+        self.search_count = 0
+        self.delete_count = 0
 
     def enqueue(self, item):
         self.queue.append(item)
+        self.insert_count += 1
 
     def dequeue(self):
-        return self.queue.pop(0) if self.queue else None
+        if self.queue:
+            self.delete_count += 1
+            return self.queue.pop(0)
+        return None
 
     def search(self, item):
+        self.search_count += 1
         return item in self.queue
 
 # === Generate random data ===
@@ -113,9 +137,9 @@ def generate_data(size: int):
     return [random.randint(0, 10000) for _ in range(size)]
 
 # === Benchmarking and testing ===
-def benchmark(size=100000):
+def benchmark(size):
     console = Console()
-    table = Table(title="Operation Times")
+    table = Table(title=f"Operation Times for {size} Elements")
     table.add_column("Structure", justify="left", style="cyan", no_wrap=True)
     table.add_column("Insert (s)", justify="right", style="magenta")
     table.add_column("Search (s)", justify="right", style="green")
@@ -167,22 +191,55 @@ def benchmark(size=100000):
 
     console.print(table)
 
+    # === Display operation counts ===
+    console.print("\n[bold]Operation Counts:[/bold]")
+    counts_table = Table(title="Operation Counts")
+    counts_table.add_column("Structure", justify="left", style="cyan", no_wrap=True)
+    counts_table.add_column("Inserted", justify="right", style="magenta")
+    counts_table.add_column("Searched", justify="right", style="green")
+    counts_table.add_column("Deleted", justify="right", style="yellow")
+
+    counts_table.add_row("List", str(size), str(size), str(size))
+    counts_table.add_row("Dict", str(size), str(size), str(size))
+    counts_table.add_row("BST", str(bst.insert_count), str(bst.search_count), str(bst.delete_count))
+    counts_table.add_row("Stack", str(stack.insert_count), str(stack.search_count), str(stack.delete_count))
+    counts_table.add_row("Queue", str(queue.insert_count), str(queue.search_count), str(queue.delete_count))
+
+    console.print(counts_table)
+
     # === Plot results ===
     structures = list(results.keys())
     insert_times = [results[struct][0] for struct in structures]
     search_times = [results[struct][1] for struct in structures]
     delete_times = [results[struct][2] for struct in structures]
 
-    plt.figure(figsize=(10, 5))
-    plt.bar(structures, insert_times, color='magenta', label='Insert')
-    plt.bar(structures, search_times, color='green', label='Search', bottom=insert_times)
-    plt.bar(structures, delete_times, color='yellow', label='Delete', bottom=[i+s for i, s in zip(insert_times, search_times)])
-    plt.xlabel("Data Structure")
-    plt.ylabel("Time (s)")
-    plt.title("Comparison of Operation Times")
+    # Set up the positions for each group of bars
+    x = np.arange(len(structures))  # the label locations
+    width = 0.25  # the width of the bars
+
+    # Create the plot
+    plt.figure(figsize=(12, 7))  # Increase the figure size for more space
+
+    # Plot the bars for each operation
+    plt.bar(x - width, insert_times, width, color='magenta', label='Insert')
+    plt.bar(x, search_times, width, color='green', label='Search')
+    plt.bar(x + width, delete_times, width, color='yellow', label='Delete')
+
+    # Adding labels, title, and legend
+    plt.xlabel("Data Structure", fontsize=12)
+    plt.ylabel("Time (s)", fontsize=12)
+    plt.title(f"Comparison of Operation Times for {size} Elements", fontsize=14)
+    plt.xticks(x, structures, rotation=45, ha='right', fontsize=10)  # Rotate labels and adjust alignment
     plt.legend()
-    plt.xticks(rotation=30)
+    plt.grid(True, axis='y')
+
+    # Make sure layout is tight to avoid cutting off labels
+    plt.tight_layout()
+
+    # Show the plot
     plt.show()
 
 if __name__ == "__main__":
-    benchmark()
+    sizes = [10, 100, 1000, 10000, 100000]
+    for size in sizes:
+        benchmark(size)
